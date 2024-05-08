@@ -6,6 +6,7 @@ using namespace std;
 // Function prototypes
 bool isLeapYear(int year);
 int daysInMonth(int month, int year);
+int dayOfWeek(int month, int day, int year);
 
 /**
  * isLeapYear – determines whether a given year is a leap year
@@ -55,16 +56,45 @@ int daysInMonth(int month, int year) {
     }
 }
 
+/**
+ * dayOfWeek – Computes the weekday of a given date using Zeller's congruence.
+ * @param year the year
+ * @param month the month (1 = January ... 12 = December)
+ * @param day the day of the month
+ * @return the weekday (0 = Saturday ... 6 = Friday)
+ */
+int dayOfWeek(int month, int day, int year) {
+    if (month == 1 || month == 2) {
+        month += 12;
+        year--;
+    }
+
+    int k = year % 100;
+    int j = year / 100;
+
+    int h = (day + (13 * (month + 1)) / 5 + k + (k / 4) + (j / 4) - (2 * j)) % 7;
+
+    // Convert h to be within 0 to 6 (0 = Saturday, 1 = Sunday, ..., 6 = Friday)
+    if (h < 0) {
+        h += 7;
+    }
+
+    return h;
+}
+
 int main() {
     string input;
-    int month, year;
+    int month, day, year;
 
-    // Array of month names (index 0 corresponds to January, index 11 corresponds to December)
-    string monthNames[12] = { "January", "February", "March", "April", "May", "June",
-                             "July", "August", "September", "October", "November", "December" };
+    // Array of weekday names
+    string weekdays[7] = { "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
+
+    // Array of month names
+    string months[12] = { "January", "February", "March", "April", "May", "June",
+                         "July", "August", "September", "October", "November", "December" };
 
     while (true) {
-        cout << "Enter a month and year (e.g., 1 2024) or Q to quit: ";
+        cout << "Enter a date (month day year) or Q to quit: ";
         getline(cin, input);
 
         if (input == "Q" || input == "q") {
@@ -72,28 +102,18 @@ int main() {
         }
 
         istringstream iss(input);
-        if (!(iss >> month >> year) || iss.peek() != EOF) {
-            cout << "Invalid input. Please enter both month and year." << endl;
+        if (!(iss >> month >> day >> year) || iss.peek() != EOF) {
+            cout << "Invalid input. Please enter month day year (e.g., 10 13 2011)." << endl;
             continue;
         }
 
-        if (month < 1 || month > 12) {
-            cout << "Month must be between 1 and 12. Please try again." << endl;
+        if (month < 1 || month > 12 || day < 1 || day > daysInMonth(month, year) || year < 1582) {
+            cout << "Invalid date. Please enter a valid date." << endl;
             continue;
         }
 
-        if (year < 1582) {
-            cout << "Year must be >= 1582. Please try again." << endl;
-            continue;
-        }
-
-        int numDays = daysInMonth(month, year);
-        if (numDays == -1) {
-            cout << "Invalid month. Please enter a valid month (1-12)." << endl;
-        }
-        else {
-            cout << monthNames[month - 1] << " " << year << " has " << numDays << " days." << endl;
-        }
+        int weekdayIndex = dayOfWeek(month, day, year);
+        cout << weekdays[weekdayIndex] << ", " << months[month - 1] << " " << day << ", " << year << endl;
     }
 
     return 0;
