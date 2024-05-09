@@ -61,10 +61,10 @@ int daysInMonth(int month, int year) {
  * @param year the year
  * @param month the month (1 = January ... 12 = December)
  * @param day the day of the month
- * @return the weekday (0 = Saturday ... 6 = Friday)
+ * @return the weekday (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
  */
 int dayOfWeek(int month, int day, int year) {
-    if (month == 1 || month == 2) {
+    if (month < 3) {
         month += 12;
         year--;
     }
@@ -72,48 +72,77 @@ int dayOfWeek(int month, int day, int year) {
     int k = year % 100;
     int j = year / 100;
 
-    int h = (day + (13 * (month + 1)) / 5 + k + (k / 4) + (j / 4) - (2 * j)) % 7;
+    int h = (day + ((13 * (month + 1)) / 5) + k + (k / 4) + (j / 4) - (2 * j)) % 7;
 
-    // Convert h to be within 0 to 6 (0 = Saturday, 1 = Sunday, ..., 6 = Friday)
-    if (h < 0) {
-        h += 7;
-    }
+    // Adjust h to be within 0 to 6 (0 = Saturday, 1 = Sunday, ..., 6 = Friday)
+    h = (h + 5) % 7;
 
-    return h;
+    return h+1;
 }
 
 int main() {
     string input;
-    int month, day, year;
+    int month, year;
 
-    // Array of weekday names
-    string weekdays[7] = { "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
+    // Prompt for input
+    cout << "Enter a month and year (e.g., 1 2024) or Q to quit: ";
+    getline(cin, input);
 
-    // Array of month names
-    string months[12] = { "January", "February", "March", "April", "May", "June",
-                         "July", "August", "September", "October", "November", "December" };
-
-    while (true) {
-        cout << "Enter a date (month day year) or Q to quit: ";
-        getline(cin, input);
-
-        if (input == "Q" || input == "q") {
-            break;
-        }
-
+    while (input != "Q" && input != "q") {
         istringstream iss(input);
-        if (!(iss >> month >> day >> year) || iss.peek() != EOF) {
-            cout << "Invalid input. Please enter month day year (e.g., 10 13 2011)." << endl;
-            continue;
+        if (!(iss >> month >> year) || iss.peek() != EOF) {
+            cout << "Invalid input. Please enter month year (e.g., 1 2024)." << endl;
+        }
+        else if (month < 1 || month > 12 || year < 1582) {
+            cout << "Invalid month or year. Please enter a valid month (1-12) and year (>=1582)." << endl;
+        }
+        else {
+            // Determine the number of days in the specified month and year
+            int numDays = daysInMonth(month, year);
+            int startDay = dayOfWeek(month, 1, year); // Starting day of the month
+
+            // Display the calendar header
+            cout << " " << month << " " << year << endl;
+            cout << " Su Mo Tu We Th Fr Sa" << endl;
+
+            // Create calendar layout dynamically
+            int currentDay = 1;
+            int weekStart = startDay;
+
+            // Loop through weeks
+            while (currentDay <= numDays) {
+                // Start a new week
+                string weekLine = "";
+
+                // Fill in days for the week
+                for (int i = 0; i < 7; ++i) {
+                    if (i < weekStart) {
+                        weekLine += "   "; // Empty space for days before the start day
+                    }
+                    else if (currentDay <= numDays) {
+                        // Append current day to the week line
+                        if (currentDay < 10) {
+                            weekLine += " " + to_string(currentDay) + " ";
+                        }
+                        else {
+                            weekLine += to_string(currentDay) + " ";
+                        }
+                        ++currentDay;
+                    }
+                }
+
+                // Output the week line
+                cout << weekLine << endl;
+
+                // Move to the next week
+                weekStart = 0; // Reset the week start for subsequent weeks
+            }
         }
 
-        if (month < 1 || month > 12 || day < 1 || day > daysInMonth(month, year) || year < 1582) {
-            cout << "Invalid date. Please enter a valid date." << endl;
-            continue;
-        }
-
-        int weekdayIndex = dayOfWeek(month, day, year);
-        cout << weekdays[weekdayIndex] << ", " << months[month - 1] << " " << day << ", " << year << endl;
+        // Prompt for next input
+        cout << "Enter a month and year (e.g., 1 2024) or Q to quit: ";
+        getline(cin, input);
     }
+
     return 0;
 }
