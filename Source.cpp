@@ -116,5 +116,6 @@ int main() {
         cout << weekdays[weekdayIndex] << ", " << months[month - 1] << " " << day << ", " << year << endl;
     }
 
+
     return 0;
 }
