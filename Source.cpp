@@ -1,12 +1,32 @@
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
+#include <algorithm>
 using namespace std;
 
 // Function prototypes
 bool isLeapYear(int year);
 int daysInMonth(int month, int year);
 int dayOfWeek(int month, int day, int year);
+int getMonthNumber(const string& monthName);
+
+// Mapping of month names to their numeric representations
+unordered_map<string, int> monthMap = {
+    {"january", 1},
+    {"february", 2},
+    {"march", 3},
+    {"april", 4},
+    {"may", 5},
+    {"june", 6},
+    {"july", 7},
+    {"august", 8},
+    {"september", 9},
+    {"october", 10},
+    {"november", 11},
+    {"december", 12}
+};
 
 /**
  * isLeapYear – determines whether a given year is a leap year
@@ -77,7 +97,26 @@ int dayOfWeek(int month, int day, int year) {
     // Adjust h to be within 0 to 6 (0 = Saturday, 1 = Sunday, ..., 6 = Friday)
     h = (h + 5) % 7;
 
-    return h+1;
+    return h;
+}
+
+/**
+ * getMonthNumber - Converts a month name to its corresponding number.
+ * @param monthName the name of the month (case-insensitive)
+ * @return the numeric representation of the month (1 = January, 2 = February, ..., 12 = December)
+ *         or -1 if the month name is invalid
+ */
+int getMonthNumber(const string& monthName) {
+    string lowercaseMonth = monthName;
+    transform(lowercaseMonth.begin(), lowercaseMonth.end(), lowercaseMonth.begin(), ::tolower);
+
+    auto it = monthMap.find(lowercaseMonth);
+    if (it != monthMap.end()) {
+        return it->second;
+    }
+    else {
+        return -1; // Invalid month name
+    }
 }
 
 int main() {
@@ -85,62 +124,91 @@ int main() {
     int month, year;
 
     // Prompt for input
-    cout << "Enter a month and year (e.g., 1 2024) or Q to quit: ";
+    cout << "Enter a month and year (e.g., March 2023) or Q to quit: ";
     getline(cin, input);
 
     while (input != "Q" && input != "q") {
         istringstream iss(input);
-        if (!(iss >> month >> year) || iss.peek() != EOF) {
-            cout << "Invalid input. Please enter month year (e.g., 1 2024)." << endl;
-        }
-        else if (month < 1 || month > 12 || year < 1582) {
-            cout << "Invalid month or year. Please enter a valid month (1-12) and year (>=1582)." << endl;
+        string monthName;
+        if (!(iss >> monthName >> year) || iss.peek() != EOF) {
+            cout << "Invalid input. Please enter month year (e.g., March 2023)." << endl;
         }
         else {
-            // Determine the number of days in the specified month and year
-            int numDays = daysInMonth(month, year);
-            int startDay = dayOfWeek(month, 1, year); // Starting day of the month
+            // Convert month name to its corresponding number
+            month = getMonthNumber(monthName);
 
-            // Display the calendar header
-            cout << " " << month << " " << year << endl;
-            cout << " Su Mo Tu We Th Fr Sa" << endl;
+            if (month == -1) {
+                cout << "Invalid month name. Please enter a valid month name (e.g., March)." << endl;
+            }
+            else if (year < 1582) {
+                cout << "Invalid year. Please enter a valid year (>=1582)." << endl;
+            }
+            else {
+                // Determine the number of days in the specified month and year
+                int numDays = daysInMonth(month, year);
+                int startDay = dayOfWeek(month, 1, year); // Starting day of the month
 
-            // Create calendar layout dynamically
-            int currentDay = 1;
-            int weekStart = startDay;
+                // Display the calendar header
+                cout << " " << monthName << " " << year << endl;
+                cout << " Su Mo Tu We Th Fr Sa" << endl;
 
-            // Loop through weeks
-            while (currentDay <= numDays) {
-                // Start a new week
-                string weekLine = "";
+                // Create calendar layout dynamically
+                int currentDay = 1;
+                int weekStart = startDay;
 
-                // Fill in days for the week
-                for (int i = 0; i < 7; ++i) {
-                    if (i < weekStart) {
-                        weekLine += "   "; // Empty space for days before the start day
-                    }
-                    else if (currentDay <= numDays) {
-                        // Append current day to the week line
-                        if (currentDay < 10) {
-                            weekLine += " " + to_string(currentDay) + " ";
-                        }
-                        else {
-                            weekLine += to_string(currentDay) + " ";
-                        }
-                        ++currentDay;
-                    }
+                // Open output file
+                string filename = monthName + to_string(year) + ".txt";
+                ofstream outfile(filename);
+
+                if (!outfile.is_open()) {
+                    cerr << "Error: Unable to open file " << filename << " for writing." << endl;
+                    break;
                 }
 
-                // Output the week line
-                cout << weekLine << endl;
+                // Write to output file
+                outfile << " " << monthName << " " << year << endl;
+                outfile << " Su Mo Tu We Th Fr Sa" << endl;
 
-                // Move to the next week
-                weekStart = 0; // Reset the week start for subsequent weeks
+                // Loop through weeks
+                while (currentDay <= numDays) {
+                    // Start a new week
+                    string weekLine = "";
+
+                    // Fill in days for the week
+                    for (int i = 0; i < 7; ++i) {
+                        if (i < weekStart) {
+                            weekLine += "   "; // Empty space for days before the start day
+                        }
+                        else if (currentDay <= numDays) {
+                            // Append current day to the week line
+                            if (currentDay < 10) {
+                                weekLine += " " + to_string(currentDay) + " ";
+                            }
+                            else {
+                                weekLine += to_string(currentDay) + " ";
+                            }
+                            ++currentDay;
+                        }
+                    }
+
+                    // Output the week line to console
+                    cout << weekLine << endl;
+
+                    // Write the week line to output file
+                    outfile << weekLine << endl;
+
+                    // Move to the next week
+                    weekStart = 0; // Reset the week start for subsequent weeks
+                }
+
+                // Close the output file
+                outfile.close();
+                cout << "Output file: " << filename << endl;
             }
         }
 
         // Prompt for next input
-        cout << "Enter a month and year (e.g., 1 2024) or Q to quit: ";
+        cout << "Enter a month and year (e.g., March 2023) or Q to quit: ";
         getline(cin, input);
     }
 
