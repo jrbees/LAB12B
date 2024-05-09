@@ -115,7 +115,5 @@ int main() {
         int weekdayIndex = dayOfWeek(month, day, year);
         cout << weekdays[weekdayIndex] << ", " << months[month - 1] << " " << day << ", " << year << endl;
     }
-
-
     return 0;
 }
